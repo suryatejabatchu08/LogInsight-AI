@@ -19,8 +19,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/$1"
+      "destination": "/api/main.py"
     }
-  ],
-  "public": "frontend"
+  ]
 }
