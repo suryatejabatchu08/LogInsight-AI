@@ -2,16 +2,6 @@
   "buildCommand": "pip install -r requirements.txt",
   "devCommand": "uvicorn api.main:app --reload --host 0.0.0.0 --port 3000",
   "installCommand": "pip install -r requirements.txt",
-  "env": {
-    "GROQ_API_KEY": "@groq_api_key",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_KEY": "@supabase_key"
-  },
-  "functions": {
-    "api/**/*.py": {
-      "runtime": "python3.11"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
