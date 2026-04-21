@@ -248,3 +248,5 @@ local_config.py
 # .next/
 # .nuxt/
 # dist/
+
+DEPLOYMENT_VERCEL.md
