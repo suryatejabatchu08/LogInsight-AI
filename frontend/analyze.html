@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Logs - LogInsight AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <span class="nav-logo">📊</span>
+                    <span class="nav-title">LogInsight AI</span>
+                </a>
+            </div>
+            <div class="nav-right">
+                <button class="nav-btn nav-btn-primary" onclick="window.location.href='analyze.html'" title="Quick analyze">
+                    🔍 Analyze
+                </button>
+                <button class="nav-btn nav-btn-secondary" onclick="window.location.href='history.html'" title="View history">
+                    📋 History
+                </button>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="nav-action">
+                    <span>?</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Page Title -->
+        <section class="hero">
+            <h1 class="hero-title">Analyze Your Logs</h1>
+            <p class="hero-subtitle">Upload and analyze log files with AI-powered insights</p>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📁</div>
+                        <h2>Drop your log file here</h2>
+                        <p>or click to browse</p>
+                        <p class="upload-formats">Supports: .log, .txt, .json</p>
+                        <input type="file" id="fileInput" class="file-input" accept=".log,.txt,.json">
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="selected-file">
+                            <span class="file-icon">📄</span>
+                            <div class="file-details">
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                            </div>
+                        </div>
+                        <button class="btn-change" id="changeFile">Change</button>
+                    </div>
+                </div>
+
+                <button class="btn-primary btn-analyze" id="analyzeBtn" disabled>
+                    <span class="btn-text">Analyze Logs</span>
+                    <span class="btn-spinner"></span>
+                </button>
+            </section>
+
+            <!-- Status Section -->
+            <section class="status-section" id="statusSection" style="display: none;">
+                <div class="status-card">
+                    <div class="status-header">
+                        <div class="status-title">
+                            <span class="status-icon">⏳</span>
+                            <h3>Analysis in Progress</h3>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                    <p class="status-message">Processing your log file with AI...</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <!-- Summary Card -->
+                <div class="result-card summary-card">
+                    <div class="result-header">
+                        <h2>Analysis Summary</h2>
+                        <span class="result-badge" id="summaryBadge"></span>
+                    </div>
+                    <p class="summary-text" id="summaryText"></p>
+                </div>
+
+                <!-- Issues Found -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2>🔴 Issues Detected</h2>
+                        <span class="issues-count" id="issuesCount"></span>
+                    </div>
+                    <div class="issues-list" id="issuesList"></div>
+                </div>
+
+                <!-- Suggested Fixes -->
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2>✅ Suggested Fixes</h2>
+                        <span class="fixes-count" id="fixesCount"></span>
+                    </div>
+                    <div class="fixes-list" id="fixesList"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="result-actions">
+                    <button class="btn-secondary" id="newAnalysisBtn">Analyze Another Log</button>
+                    <button class="btn-secondary" id="copyResultsBtn">Copy Results</button>
+                    <button class="btn-secondary" id="downloadResultsBtn">Download Report</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="toast" id="errorToast"></div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

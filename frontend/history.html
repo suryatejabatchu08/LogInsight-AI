@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History - LogInsight AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <span class="nav-logo">📊</span>
+                    <span class="nav-title">LogInsight AI</span>
+                </a>
+            </div>
+            <div class="nav-right">
+                <button class="nav-btn nav-btn-primary" onclick="window.location.href='analyze.html'" title="Quick analyze">
+                    🔍 Analyze
+                </button>
+                <button class="nav-btn nav-btn-secondary" onclick="window.location.href='history.html'" title="View history">
+                    📋 History
+                </button>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="nav-action">
+                    <span>?</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Page Title -->
+        <section class="hero">
+            <h1 class="hero-title">Analysis History</h1>
+            <p class="hero-subtitle">View and manage your previous log analyses</p>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- History Section -->
+            <section class="history-section" id="historySection">
+                <div class="section-header">
+                    <h2>📋 Recent Analyses</h2>
+                    <button class="btn-outline" id="refreshHistory">Refresh</button>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="filters-container">
+                    <div class="filters-header">
+                        <h3>🔍 Advanced Filters</h3>
+                        <button class="btn-outline btn-sm" id="clearFilters">Clear All</button>
+                    </div>
+                    
+                    <div class="filters-grid">
+                        <!-- File Name Filter -->
+                        <div class="filter-group">
+                            <label for="filterFileName">File Name</label>
+                            <input type="text" id="filterFileName" placeholder="Search by filename..." class="filter-input">
+                        </div>
+
+                        <!-- Date From Filter -->
+                        <div class="filter-group">
+                            <label for="filterDateFrom">Date From</label>
+                            <input type="date" id="filterDateFrom" class="filter-input">
+                        </div>
+
+                        <!-- Date To Filter -->
+                        <div class="filter-group">
+                            <label for="filterDateTo">Date To</label>
+                            <input type="date" id="filterDateTo" class="filter-input">
+                        </div>
+
+                        <!-- Issue Type Filter -->
+                        <div class="filter-group">
+                            <label for="filterIssueType">Issue Type</label>
+                            <select id="filterIssueType" class="filter-input">
+                                <option value="">All Issue Types</option>
+                                <option value="auth">Auth Failure</option>
+                                <option value="server">Server Error</option>
+                                <option value="connection">Connection Error</option>
+                                <option value="permission">Permission Error</option>
+                                <option value="timeout">Timeout</option>
+                            </select>
+                        </div>
+
+                        <!-- Severity Filter -->
+                        <div class="filter-group">
+                            <label for="filterSeverity">Severity Level</label>
+                            <select id="filterSeverity" class="filter-input">
+                                <option value="">All Levels</option>
+                                <option value="critical">Critical</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+
+                        <!-- Results Per Page -->
+                        <div class="filter-group">
+                            <label for="filterLimit">Results Per Page</label>
+                            <select id="filterLimit" class="filter-input">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filter Stats -->
+                    <div class="filter-stats">
+                        <span id="filterResultCount">Showing 0 analyses</span>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div class="history-list" id="historyList"></div>
+                <div class="history-empty" id="historyEmpty">
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="font-size: 1.1rem; margin-bottom: 1rem;">No analyses yet</p>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Start by uploading a log file to get your first analysis</p>
+                        <a href="analyze.html" class="btn-primary" style="text-decoration: none; display: inline-block;">
+                            🔍 Go to Analyze
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="toast" id="errorToast"></div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

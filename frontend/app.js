@@ -24,10 +24,38 @@ const uploadSection = document.querySelector('.upload-section');
 const errorToast = document.getElementById('errorToast');
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initializeTheme();
     setupEventListeners();
-    loadHistory();
+    
+    // Load history if on analyze/history pages
+    if (document.getElementById('historyList')) {
+        loadHistory();
+    }
+    
+    // Load stats if on home page
+    if (document.getElementById('totalAnalyses')) {
+        loadStats();
+    }
+    
+    // Check if we should load a past analysis
+    if (document.getElementById('resultsSection')) {
+        const jobId = sessionStorage.getItem('loadJobId');
+        if (jobId) {
+            sessionStorage.removeItem('loadJobId');
+            try {
+                const response = await fetch(`${API_BASE_URL}/results/${jobId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResults(data);
+                    statusSection.style.display = 'none';
+                    resultsSection.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to load past analysis:', error);
+            }
+        }
+    }
 });
 
 // Theme Management
@@ -37,17 +65,24 @@ function initializeTheme() {
 }
 
 function updateThemeToggle() {
-    themeToggle.textContent = state.isDarkMode ? '☀️' : '🌙';
+    if (themeToggle) {
+        themeToggle.textContent = state.isDarkMode ? '☀️' : '🌙';
+    }
 }
 
-themeToggle.addEventListener('click', () => {
-    state.isDarkMode = !state.isDarkMode;
-    localStorage.setItem('theme', state.isDarkMode ? 'dark' : 'light');
-    initializeTheme();
-});
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        state.isDarkMode = !state.isDarkMode;
+        localStorage.setItem('theme', state.isDarkMode ? 'dark' : 'light');
+        initializeTheme();
+    });
+}
 
 // Event Listeners
 function setupEventListeners() {
+    // Only setup if elements exist (not on all pages)
+    if (!document.getElementById('uploadZone')) return;
+    
     // Drag and drop
     uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -235,21 +270,153 @@ function displayResults(data) {
 }
 
 // Load History
+// Store raw history data for filtering
+let allHistoryData = [];
+let allHistoryDetails = {};
+
 async function loadHistory() {
     try {
-        const response = await fetch(`${API_BASE_URL}/history`);
+        const response = await fetch(`${API_BASE_URL}/history?limit=100`);
         if (!response.ok) throw new Error('Failed to fetch history');
 
         const jobs = await response.json();
-        const historyList = document.getElementById('historyList');
-        const historyEmpty = document.getElementById('historyEmpty');
+        allHistoryData = jobs;
+        
+        // Preload details for all jobs (for filtering)
+        for (const job of jobs) {
+            if (!allHistoryDetails[job.id]) {
+                try {
+                    const detailResponse = await fetch(`${API_BASE_URL}/results/${job.id}`);
+                    if (detailResponse.ok) {
+                        allHistoryDetails[job.id] = await detailResponse.json();
+                    }
+                } catch (e) {
+                    console.error(`Failed to load details for job ${job.id}:`, e);
+                }
+            }
+        }
+        
+        // Setup filter listeners on history page
+        if (document.getElementById('filterFileName')) {
+            setupFilterListeners();
+        }
+        
+        // Display filtered results
+        displayFilteredHistory();
+    } catch (error) {
+        console.error('History error:', error);
+        showError('Failed to load history');
+    }
+}
 
-        if (jobs.length === 0) {
-            historyList.innerHTML = '';
-            historyEmpty.style.display = 'block';
-        } else {
-            historyEmpty.style.display = 'none';
-            historyList.innerHTML = jobs.map((job) => `
+// Setup filter event listeners
+function setupFilterListeners() {
+    const filterInputs = [
+        'filterFileName',
+        'filterDateFrom',
+        'filterDateTo',
+        'filterIssueType',
+        'filterSeverity',
+        'filterLimit'
+    ];
+    
+    filterInputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', displayFilteredHistory);
+            element.addEventListener('input', displayFilteredHistory);
+        }
+    });
+    
+    // Clear filters button
+    const clearBtn = document.getElementById('clearFilters');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearAllFilters);
+    }
+}
+
+// Clear all filters
+function clearAllFilters() {
+    document.getElementById('filterFileName').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterIssueType').value = '';
+    document.getElementById('filterSeverity').value = '';
+    displayFilteredHistory();
+}
+
+// Apply filters and display results
+function displayFilteredHistory() {
+    const fileName = document.getElementById('filterFileName').value.toLowerCase();
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    const issueType = document.getElementById('filterIssueType').value;
+    const severity = document.getElementById('filterSeverity').value;
+    const limit = parseInt(document.getElementById('filterLimit').value) || 20;
+    
+    let filtered = allHistoryData.filter(job => {
+        // File name filter
+        if (fileName && !job.filename.toLowerCase().includes(fileName)) {
+            return false;
+        }
+        
+        // Date range filter
+        const jobDate = new Date(job.created_at).toISOString().split('T')[0];
+        if (dateFrom && jobDate < dateFrom) return false;
+        if (dateTo && jobDate > dateTo) return false;
+        
+        // Issue type and severity filters (check job details)
+        if ((issueType || severity) && allHistoryDetails[job.id]) {
+            const details = allHistoryDetails[job.id];
+            const issues = details.issues || [];
+            
+            if (issueType) {
+                const hasIssueType = issues.some(issue => 
+                    issue.pattern_name.toLowerCase().includes(issueType.toLowerCase())
+                );
+                if (!hasIssueType) return false;
+            }
+            
+            if (severity) {
+                const hasSeverity = issues.some(issue => 
+                    issue.severity.toLowerCase() === severity.toLowerCase()
+                );
+                if (!hasSeverity) return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Apply limit
+    filtered = filtered.slice(0, limit);
+    
+    // Update results count
+    document.getElementById('filterResultCount').textContent = 
+        `Showing ${filtered.length} of ${allHistoryData.length} analyses`;
+    
+    // Render results
+    const historyList = document.getElementById('historyList');
+    const historyEmpty = document.getElementById('historyEmpty');
+    
+    if (filtered.length === 0) {
+        historyList.innerHTML = '';
+        historyEmpty.style.display = 'block';
+    } else {
+        historyEmpty.style.display = 'none';
+        historyList.innerHTML = filtered.map((job) => {
+            const details = allHistoryDetails[job.id];
+            const issueCount = details?.issues?.length || 0;
+            const severityCounts = {};
+            
+            if (details?.issues) {
+                details.issues.forEach(issue => {
+                    severityCounts[issue.severity.toLowerCase()] = 
+                        (severityCounts[issue.severity.toLowerCase()] || 0) + 1;
+                });
+            }
+            
+            return `
                 <div class="history-item" onclick="loadPastAnalysis('${job.id}')">
                     <div class="history-filename">📄 ${escapeHtml(job.filename)}</div>
                     <div class="history-meta">
@@ -257,30 +424,19 @@ async function loadHistory() {
                             ✓ ${job.status}
                         </div>
                         <div>${formatDate(job.created_at)}</div>
+                        ${issueCount > 0 ? `<div style="color: var(--error);">🔴 ${issueCount} issue${issueCount !== 1 ? 's' : ''}</div>` : '<div style="color: var(--success);">✨ No issues</div>'}
                     </div>
                 </div>
-            `).join('');
-        }
-    } catch (error) {
-        console.error('History error:', error);
+            `;
+        }).join('');
     }
 }
 
 // Load Past Analysis
 async function loadPastAnalysis(jobId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/results/${jobId}`);
-        if (!response.ok) throw new Error('Failed to load analysis');
-
-        const data = await response.json();
-        uploadSection.scrollIntoView({ behavior: 'smooth' });
-        displayResults(data);
-        statusSection.style.display = 'none';
-        resultsSection.style.display = 'block';
-    } catch (error) {
-        console.error('Load analysis error:', error);
-        showError(`Failed to load analysis: ${error.message}`);
-    }
+    // Store job ID and navigate to analyze page
+    sessionStorage.setItem('loadJobId', jobId);
+    window.location.href = 'analyze.html';
 }
 
 // Export Functions
@@ -380,4 +536,43 @@ function showSuccess(message) {
     setTimeout(() => {
         errorToast.classList.remove('show');
     }, 3000);
+}
+
+// Navigation Scroll Functions
+function scrollToAnalyze() {
+    uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    fileInput.click();
+}
+
+function scrollToHistory() {
+    historySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Load Stats for Home Page
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/history`);
+        if (response.ok) {
+            const analyses = await response.json();
+            
+            // Calculate stats
+            let totalIssues = 0;
+            for (const analysis of analyses) {
+                if (analysis.result && analysis.result.issues) {
+                    totalIssues += analysis.result.issues.length;
+                }
+            }
+            
+            // Update stat cards
+            document.getElementById('totalAnalyses').textContent = analyses.length;
+            document.getElementById('issuesDetected').textContent = totalIssues;
+            document.getElementById('filesAnalyzed').textContent = analyses.length;
+        }
+    } catch (error) {
+        console.error('Load stats error:', error);
+        // Set defaults if error
+        document.getElementById('totalAnalyses').textContent = '0';
+        document.getElementById('issuesDetected').textContent = '0';
+        document.getElementById('filesAnalyzed').textContent = '0';
+    }
 }
